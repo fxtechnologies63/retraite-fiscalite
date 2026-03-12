@@ -2,31 +2,30 @@ name: Deploy to o2switch
 
 on:
   push:
-    branches:
-      - main  # Se déclenche à chaque push sur la branche main
+      branches:
+            - main
 
-jobs:
-  deploy:
-    name: Déploiement sur o2switch
-    runs-on: ubuntu-latest
+            jobs:
+              deploy:
+                  name: Deploiement sur o2switch
+                      runs-on: ubuntu-latest
 
-    steps:
-      # 1. Récupérer le code du repo
-      - name: Checkout du code
-        uses: actions/checkout@v4
+                          steps:
+                                - name: Checkout du code
+                                        uses: actions/checkout@v4
 
-      # 2. Déployer via rsync + SSH
-      - name: Déploiement SSH vers o2switch
-        uses: burnett01/rsync-deployments@7.0.1
-        with:
-          switches: -avzr --delete --exclude='.env.php' --exclude='.git' --exclude='.github' --exclude='logs/' --exclude='README.md'
-          path: ./
-          remote_path: ~/public_html/
-          remote_port: 2222
-          remote_host: ${{ secrets.SSH_HOST }}
-          remote_user: ${{ secrets.SSH_USER }}
-          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      # 3. Confirmation
-      - name: Déploiement terminé
-        run: echo "✅ Site déployé sur o2switch avec succès !"
+                                              - name: Deploiement FTP vers o2switch
+                                                      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+                                                              with:
+                                                                        server: ${{ secrets.FTP_HOST }}
+                                                                                  username: ${{ secrets.FTP_USER }}
+                                                                                            password: ${{ secrets.FTP_PASSWORD }}
+                                                                                                      server-dir: /public_html/
+                                                                                                                exclude: |
+                                                                                                                            **/.git*
+                                                                                                                                        **/.git*/**
+                                                                                                                                                    .env.php
+                                                                                                                                                                README.md
+                                                                                                                                                                
+                                                                                                                                                                      - name: Deploiement termine
+                                                                                                                                                                              run: echo "Site deploye avec succes !"
