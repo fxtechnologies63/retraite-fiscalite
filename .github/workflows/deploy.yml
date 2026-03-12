@@ -17,15 +17,16 @@ on:
                                               - name: Deploiement FTP vers o2switch
                                                       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
                                                               with:
-                                                                        server: ${{ secrets.FTP_HOST }}
+                                                                        server: fou.o2switch.net
                                                                                   username: ${{ secrets.FTP_USER }}
-                                                                                            password: ${{ secrets.FTP_PASSWORD }}
-                                                                                                      server-dir: /public_html/
-                                                                                                                exclude: |
-                                                                                                                            **/.git*
-                                                                                                                                        **/.git*/**
-                                                                                                                                                    .env.php
-                                                                                                                                                                README.md
-                                                                                                                                                                
-                                                                                                                                                                      - name: Deploiement termine
-                                                                                                                                                                              run: echo "Site deploye avec succes !"
+                                                                                            password: ${{ secrets.FTP_PASS }}
+                                                                                                      local-dir: ./
+                                                                                                                server-dir: /public_html/
+                                                                                                                          exclude: |
+                                                                                                                                      **/.git*
+                                                                                                                                                  **/.git*/**
+                                                                                                                                                              .env.php
+                                                                                                                                                                          README.md
+                                                                                                                                                                          
+                                                                                                                                                                                - name: Deploiement termine
+                                                                                                                                                                                        run: echo "Site deploye avec succes via FTP !"
