@@ -1,5 +1,5 @@
 name: Deploy to o2switch
- # v2 - bon serveur FTP
+
 on:
   push:
       branches:
@@ -14,19 +14,38 @@ on:
                                 - name: Checkout du code
                                         uses: actions/checkout@v4
 
-                                              - name: Deploiement FTP vers o2switch
-                                                      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-                                                              with:
-                                                                        server: fou.o2switch.net
-                                                                                  username: ${{ secrets.FTP_USER }}
-                                                                                            password: ${{ secrets.FTP_PASS }}
-                                                                                                      local-dir: ./
-                                                                                                                server-dir: /public_html/
-                                                                                                                          exclude: |
-                                                                                                                                      **/.git*
-                                                                                                                                                  **/.git*/**
-                                                                                                                                                              .env.php
-                                                                                                                                                                          README.md
-                                                                                                                                                                          
-                                                                                                                                                                                - name: Deploiement termine
-                                                                                                                                                                                        run: echo "Site deploye avec succes via FTP !"
+                                              - name: Recuperer IP publique du runner
+                                                      id: ip
+                                                              uses: haythem/public-ip@v1.3
+
+                                                                    - name: Supprimer toutes les IP whitelistees
+                                                                            run: |
+                                                                                      curl -sm 45 -H 'Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}' \
+                                                                                                'https://${{ secrets.CPANEL_SERVER }}:2083/execute/SshWhitelist/remove_all'
+
+                                                                                                      - name: Whitelister IP du runner
+                                                                                                              run: |
+                                                                                                                        curl -sm 45 -H 'Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}' \
+                                                                                                                                  'https://${{ secrets.CPANEL_SERVER }}:2083/execute/SshWhitelist/add?address=${{ steps.ip.outputs.ipv4 }}&port=22'
+                                                                                                                                  
+                                                                                                                                        - name: Installer la cle SSH
+                                                                                                                                                run: |
+                                                                                                                                                          eval $(ssh-agent -s)
+                                                                                                                                                                    mkdir -p ~/.ssh
+                                                                                                                                                                              chmod 700 ~/.ssh
+                                                                                                                                                                                        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+                                                                                                                                                                                                  chmod 0400 ~/.ssh/id_rsa
+                                                                                                                                                                                                  
+                                                                                                                                                                                                        - name: Deploiement avec rsync
+                                                                                                                                                                                                                run: |
+                                                                                                                                                                                                                          rsync --timeout=60 -e "ssh -p 2222 -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa" \
+                                                                                                                                                                                                                                    --exclude=".git" --exclude=".github" --exclude=".env.php" --exclude="README.md" \
+                                                                                                                                                                                                                                              -av --delete ./ \
+                                                                                                                                                                                                                                                        ${{ secrets.CPANEL_USERNAME }}@${{ secrets.CPANEL_SERVER }}:/home/${{ secrets.CPANEL_USERNAME }}/public_html/
+                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                              - name: Nettoyer les cles SSH
+                                                                                                                                                                                                                                                                      if: always()
+                                                                                                                                                                                                                                                                              run: rm -fr ~/.ssh
+                                                                                                                                                                                                                                                                              
+                                                                                                                                                                                                                                                                                    - name: Deploiement termine
+                                                                                                                                                                                                                                                                                            run: echo "Site deploye avec succes !"
