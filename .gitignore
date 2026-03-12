@@ -1,0 +1,20 @@
+# ── Fichiers secrets — NE JAMAIS committer ──
+.env.php
+.env
+*.env
+
+# Logs serveur
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Éditeurs
+.vscode/
+.idea/
+*.swp
+
+# Dépendances PHP (si Composer utilisé plus tard)
+vendor/

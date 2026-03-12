@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paiement confirmé — Retraite & Fiscalité</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0D2B4E;--yellow:#F5C400;--agri:#2A6A2A;--agri-pale:#EBF5EB;--text-muted:#5A7090;--border:rgba(13,43,78,.1)}
+body{font-family:'DM Sans',sans-serif;background:#F5F7FC;color:var(--navy);min-height:100vh;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:11px;padding:0 52px;height:64px;background:var(--navy)}
+.logo-mark{width:34px;height:34px;background:var(--yellow);border-radius:7px;display:flex;align-items:center;justify-content:center;color:var(--navy);font-family:'Syne',sans-serif;font-size:16px;font-weight:800}
+.logo-text{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:white}
+.logo-text span{color:var(--yellow)}
+.container{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 24px}
+.card{background:white;border-radius:20px;padding:48px 44px;max-width:500px;width:100%;text-align:center;border-top:4px solid var(--yellow);box-shadow:0 8px 32px rgba(13,43,78,.1)}
+.icon{width:72px;height:72px;background:var(--agri-pale);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:34px;margin:0 auto 24px}
+h1{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;margin-bottom:12px;color:var(--navy)}
+.sub{font-size:15px;color:var(--text-muted);line-height:1.65;margin-bottom:28px}
+.info-box{background:var(--agri-pale);border-left:3px solid var(--agri);border-radius:8px;padding:14px 18px;font-size:13px;color:#1A4A1A;text-align:left;margin-bottom:28px;line-height:1.6}
+.btn{display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:white;padding:12px 28px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;text-decoration:none;border-top:2px solid var(--yellow);box-shadow:0 2px 8px rgba(13,43,78,.2);transition:background .15s}
+.btn:hover{background:#1A4070}
+.session-id{font-size:11px;color:var(--text-muted);margin-top:20px;font-family:monospace}
+footer{background:var(--navy);border-top:3px solid var(--yellow);padding:18px 52px;text-align:center}
+footer p{font-size:12px;color:rgba(255,255,255,.4)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">R</div>
+  <span class="logo-text">Retraite <span>&amp; Fiscalité</span></span>
+</header>
+
+<div class="container">
+  <div class="card" id="card-content">
+    <div class="icon">✅</div>
+    <h1 id="title">Paiement confirmé !</h1>
+    <p class="sub" id="subtitle">Merci pour votre confiance.</p>
+    <div class="info-box" id="info-box"></div>
+    <a href="app.html" class="btn">← Retour à l'application</a>
+    <p class="session-id" id="session-id"></p>
+  </div>
+</div>
+
+<footer>
+  <p>© 2025 Retraite &amp; Fiscalité — Outil d'aide à la décision.</p>
+</footer>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const type = params.get('type');
+const sessionId = params.get('session_id');
+
+if (type === 'abonnement') {
+  document.getElementById('title').textContent = 'Abonnement activé !';
+  document.getElementById('subtitle').textContent = 'Votre abonnement conseiller est maintenant actif. Vous pouvez effectuer des simulations illimitées.';
+  document.getElementById('info-box').innerHTML = '🎉 Un email de confirmation vous a été envoyé.<br>Vous avez désormais accès à toutes les fonctionnalités conseiller sans limitation.';
+  // Réinitialiser le compteur de simulations
+  localStorage.setItem('simCount', '0');
+  localStorage.setItem('hasSubscription', 'true');
+  localStorage.setItem('subscriptionDate', new Date().toISOString());
+} else if (type === 'rapport') {
+  document.getElementById('title').textContent = 'Rapport en cours de préparation !';
+  document.getElementById('subtitle').textContent = 'Votre paiement de 10 € a bien été reçu.';
+  document.getElementById('info-box').innerHTML = '📧 Votre rapport détaillé vous sera envoyé par email sous 24h.<br>Vérifiez vos spams si vous ne le recevez pas.';
+}
+
+if (sessionId) {
+  document.getElementById('session-id').textContent = 'Référence : ' + sessionId;
+}
+</script>
+
+</body>
+</html>

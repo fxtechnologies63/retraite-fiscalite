@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retraite & Fiscalité — Simulateurs Fiscaux</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Source+Serif+4:ital,wght@0,700;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://js.stripe.com/v3/"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  /* ── Palette principale ── */
+  --navy:#0D2B4E;
+  --navy-mid:#1A4070;
+  --navy-light:#2A5FA0;
+  --yellow:#F5C400;
+  --yellow-light:#FFE066;
+  --yellow-pale:#FFFBE8;
+  --yellow-dark:#C49A00;
+  --white:#FFFFFF;
+  --off-white:#F5F7FC;
+  --text:#0D2B4E;
+  --text-muted:#5A7090;
+  --border:rgba(13,43,78,.1);
+  --surface:#EEF3FA;
+
+  /* ── Simulateurs ── */
+  --agri:#2A6A2A;
+  --agri-light:#4EA84E;
+  --agri-pale:#EBF5EB;
+  --tns:#4A5568;
+  --tns-light:#718096;
+  --tns-pale:#EDF2F7;
+  --ir:#1555C0;
+  --ir-light:#4A7FE0;
+  --ir-pale:#E8EEFA;
+  --soc:#9B7A3A;
+  --soc-light:#C4A060;
+  --soc-pale:#FAF3E0;
+}
+
+body{font-family:'DM Sans',sans-serif;background:var(--off-white);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* ─── HEADER ─── */
+header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:0 52px;height:64px;
+  background:var(--navy);
+  position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 16px rgba(13,43,78,.25);
+}
+.logo{display:flex;align-items:center;gap:11px;text-decoration:none;cursor:pointer}
+.logo-mark{
+  width:36px;height:36px;background:var(--yellow);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--navy);font-family:'Syne',sans-serif;font-size:17px;font-weight:800;
+  flex-shrink:0;box-shadow:0 2px 8px rgba(245,196,0,.4);
+}
+.logo-text{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--white);line-height:1.2;letter-spacing:.3px}
+.logo-text span{color:var(--yellow)}
+.header-right{display:flex;align-items:center;gap:12px}
+.header-badge{
+  background:rgba(245,196,0,.15);color:var(--yellow);
+  font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
+  padding:4px 12px;border-radius:20px;border:1px solid rgba(245,196,0,.3);
+}
+.back-link{
+  display:flex;align-items:center;gap:6px;font-size:13px;
+  color:rgba(255,255,255,.6);cursor:pointer;transition:color .2s;
+  background:none;border:none;font-family:'DM Sans',sans-serif;
+}
+.back-link:hover{color:var(--yellow)}
+nav{display:flex;gap:4px;align-items:center}
+nav button{
+  background:none;border:none;font-family:'DM Sans',sans-serif;
+  font-size:13px;font-weight:500;color:rgba(255,255,255,.65);
+  cursor:pointer;transition:color .15s;padding:6px 13px;border-radius:6px;
+}
+nav button:hover{color:white;background:rgba(255,255,255,.09)}
+.btn-nav{
+  background:var(--yellow)!important;color:var(--navy)!important;
+  padding:8px 18px!important;border-radius:7px!important;
+  font-weight:700!important;font-size:13px!important;
+  box-shadow:0 2px 8px rgba(245,196,0,.35)!important;
+  transition:background .15s,box-shadow .15s!important;
+}
+.btn-nav:hover{background:var(--yellow-light)!important;box-shadow:0 4px 14px rgba(245,196,0,.45)!important}
+
+/* ─── PAGE SYSTEM ─── */
+.page{display:none}
+.page.active{display:block;animation:fadeUp .35s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+/* ════════════════════
+   HOME PAGE
+════════════════════ */
+.hero-wrap{
+  background:var(--navy);
+  clip-path:polygon(0 0,100% 0,100% 84%,0 100%);
+  padding:72px 52px 108px;
+  text-align:center;
+  position:relative;overflow:hidden;
+}
+/* subtle dot grid texture */
+.hero-wrap::before{
+  content:'';position:absolute;inset:0;
+  background-image:radial-gradient(rgba(245,196,0,.08) 1px, transparent 1px);
+  background-size:28px 28px;
+  pointer-events:none;
+}
+.hero{max-width:760px;margin:0 auto;position:relative;z-index:1}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(245,196,0,.12);border:1px solid rgba(245,196,0,.3);
+  padding:6px 16px;border-radius:100px;
+  font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
+  color:var(--yellow);margin-bottom:28px;
+}
+.hero-badge::before{content:'';width:6px;height:6px;background:var(--yellow);border-radius:50%;animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.hero h1{
+  font-family:'Syne',sans-serif;
+  font-size:clamp(34px,5vw,60px);font-weight:800;
+  line-height:1.06;letter-spacing:-1.5px;
+  color:white;margin-bottom:20px;
+}
+.hero h1 em{font-style:italic;color:var(--yellow);font-family:'Source Serif 4',serif}
+.hero-sub{font-size:16px;color:rgba(255,255,255,.6);max-width:470px;margin:0 auto;line-height:1.7}
+
+/* Who section */
+.who-section{padding:0 52px 56px;max-width:1000px;margin:-28px auto 0;position:relative;z-index:2}
+.who-label{text-align:center;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:22px;padding-top:4px}
+.who-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+
+.who-card{
+  border-radius:18px;padding:36px 32px 32px;cursor:pointer;display:block;
+  position:relative;overflow:hidden;
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1),box-shadow .3s;
+  border:none;width:100%;text-align:left;
+}
+.who-card:hover{transform:translateY(-7px);box-shadow:0 28px 56px rgba(13,43,78,.22)}
+.who-card.conseiller{
+  background:var(--navy);color:white;
+  border-top:3px solid var(--yellow);
+  box-shadow:0 8px 28px rgba(13,43,78,.18);
+}
+.who-card.client{
+  background:var(--agri);color:white;
+  border-top:3px solid rgba(255,255,255,.3);
+  box-shadow:0 8px 28px rgba(42,106,42,.2);
+}
+.who-card::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;border-radius:50%;background:white;opacity:.05;transition:transform .4s}
+.who-card:hover::before{transform:scale(1.5)}
+.card-icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:20px;position:relative;z-index:2}
+.conseiller .card-icon{background:rgba(245,196,0,.2)}
+.client .card-icon{background:rgba(255,255,255,.15)}
+.card-tag{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;opacity:.5;margin-bottom:6px;position:relative;z-index:2}
+.card-title{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;line-height:1.1;margin-bottom:11px;position:relative;z-index:2}
+.card-desc{font-size:13px;line-height:1.65;opacity:.7;margin-bottom:22px;position:relative;z-index:2;max-width:300px}
+.card-features{list-style:none;display:flex;flex-direction:column;gap:6px;margin-bottom:26px;position:relative;z-index:2}
+.card-features li{font-size:12.5px;opacity:.8;display:flex;align-items:center;gap:8px}
+.card-features li::before{content:'';width:4px;height:4px;border-radius:50%;background:currentColor;opacity:.6;flex-shrink:0}
+.card-cta{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;position:relative;z-index:2;transition:gap .2s}
+.conseiller .card-cta{color:var(--yellow)}
+.client .card-cta{color:rgba(255,255,255,.9)}
+.who-card:hover .card-cta{gap:13px}
+.cta-arrow{width:26px;height:26px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:12px;opacity:.85}
+
+/* Simulators */
+.sims-section{padding:0 52px 52px;max-width:1000px;margin:0 auto}
+.section-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:5px;color:var(--navy)}
+.section-sub{font-size:13px;color:var(--text-muted);margin-bottom:20px}
+.sim-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}
+
+.sim-card{
+  background:white;border-radius:14px;padding:22px 18px;
+  border:2px solid transparent;
+  cursor:pointer;text-align:left;width:100%;
+  transition:transform .2s,box-shadow .2s;
+  position:relative;overflow:hidden;font-family:'DM Sans',sans-serif;
+  box-shadow:0 2px 8px rgba(13,43,78,.06);
+}
+.sim-card:hover{transform:translateY(-4px);box-shadow:0 14px 32px rgba(13,43,78,.12)}
+.sim-card.soon{cursor:default}
+.sim-card.soon:hover{transform:none;box-shadow:0 2px 8px rgba(13,43,78,.06)}
+
+/* Agriculteur — vert */
+.sim-agri{border-color:var(--agri);background:linear-gradient(160deg,var(--agri-pale),white 60%)}
+.sim-agri:hover{box-shadow:0 14px 32px rgba(42,106,42,.14)}
+.sim-agri .sim-badge{background:var(--agri);color:white}
+.sim-agri .sim-icon-wrap{background:var(--agri-pale)}
+.sim-agri .sim-name{color:var(--agri)}
+
+/* TNS — gris */
+.sim-tns{border-color:var(--tns);background:linear-gradient(160deg,var(--tns-pale),white 60%)}
+.sim-tns .sim-badge{background:var(--tns);color:white}
+.sim-tns .sim-icon-wrap{background:var(--tns-pale)}
+.sim-tns .sim-name{color:var(--tns)}
+
+/* Contribuable IR — bleu */
+.sim-ir{border-color:var(--ir);background:linear-gradient(160deg,var(--ir-pale),white 60%)}
+.sim-ir .sim-badge{background:var(--ir);color:white}
+.sim-ir .sim-icon-wrap{background:var(--ir-pale)}
+.sim-ir .sim-name{color:var(--ir)}
+
+/* Sociétés — beige/camel */
+.sim-soc{border-color:var(--soc);background:linear-gradient(160deg,var(--soc-pale),white 60%)}
+.sim-soc .sim-badge{background:var(--soc);color:white}
+.sim-soc .sim-icon-wrap{background:var(--soc-pale)}
+.sim-soc .sim-name{color:var(--soc)}
+
+.sim-badge{position:absolute;top:10px;right:10px;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:3px 8px;border-radius:4px}
+.sim-icon-wrap{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.sim-emoji{font-size:20px}
+.sim-name{font-family:'Syne',sans-serif;font-size:13.5px;font-weight:800;margin-bottom:5px;line-height:1.2}
+.sim-desc{font-size:11.5px;color:var(--text-muted);line-height:1.5}
+
+/* Stats bar */
+.stats-bar{
+  max-width:880px;margin:0 auto 56px;
+  background:var(--navy);border-radius:16px;
+  padding:28px 40px;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:16px;
+  border-top:3px solid var(--yellow);
+  box-shadow:0 8px 32px rgba(13,43,78,.18);
+}
+.stat-item{text-align:center}
+.stat-value{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--yellow);display:block;margin-bottom:4px}
+.stat-label{font-size:11px;color:rgba(255,255,255,.4);font-weight:500}
+
+/* ════════════════════
+   CONSEILLER PAGE
+════════════════════ */
+.adv-layout{display:grid;grid-template-columns:252px 1fr;min-height:calc(100vh - 64px);background:var(--surface)}
+.sidebar{background:white;border-right:1px solid var(--border);padding:24px 0;position:sticky;top:64px;height:calc(100vh - 64px);overflow-y:auto}
+.sidebar-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);padding:0 22px 12px}
+.step-item{display:flex;align-items:center;gap:10px;padding:10px 22px;cursor:pointer;transition:background .15s;border-left:3px solid transparent}
+.step-item.active{background:rgba(13,43,78,.05);border-left-color:var(--navy)}
+.step-item:hover:not(.active){background:rgba(13,43,78,.03)}
+.step-num{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text-muted);flex-shrink:0;transition:all .2s}
+.step-item.active .step-num{background:var(--navy);border-color:var(--navy);color:white}
+.step-item.done .step-num{background:var(--agri);border-color:var(--agri);color:white}
+.step-item.done .step-num::before{content:'✓'}
+.step-item.done .step-num span{display:none}
+.step-name{font-size:13px;font-weight:600;color:var(--text)}
+.step-item.active .step-name{color:var(--navy)}
+.step-sub{font-size:11px;color:var(--text-muted);margin-top:1px}
+.sim-counter{margin:20px 20px 0;padding:13px;background:var(--yellow-pale);border:1px solid rgba(245,196,0,.4);border-radius:10px}
+.counter-label{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-muted);margin-bottom:7px}
+.counter-dots{display:flex;gap:6px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--border)}
+.dot.used{background:var(--navy)}
+.counter-text{font-size:11px;color:var(--text-muted);margin-top:7px}
+
+.adv-main{padding:32px 44px;max-width:820px}
+.step-panel{display:none}
+.step-panel.active{display:block;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.panel-title{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-bottom:5px;color:var(--navy)}
+.panel-sub{font-size:14px;color:var(--text-muted);margin-bottom:26px}
+
+/* Forms */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:17px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group.full{grid-column:1/-1}
+.form-group label,.flabel{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted)}
+input,select,textarea{
+  padding:10px 13px;border:1.5px solid var(--border);border-radius:8px;
+  font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);
+  background:white;transition:border-color .2s,box-shadow .2s;outline:none;width:100%;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(13,43,78,.07)}
+textarea{resize:vertical;min-height:78px}
+.input-euro{position:relative}
+.input-euro input{padding-right:34px}
+.euro-sym{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--text-muted)}
+.section-sep{grid-column:1/-1;border:none;border-top:1px solid var(--border);margin:5px 0}
+
+/* Upload */
+.upload-zone{border:2px dashed rgba(13,43,78,.2);border-radius:14px;padding:40px 24px;text-align:center;cursor:pointer;background:rgba(13,43,78,.02);transition:all .2s;position:relative}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--navy);background:rgba(13,43,78,.04)}
+.upload-zone.success{border-color:var(--agri);border-style:solid;background:var(--agri-pale)}
+.upload-icon{font-size:40px;margin-bottom:13px}
+.upload-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px;color:var(--navy)}
+.upload-sub{font-size:13px;color:var(--text-muted);margin-bottom:16px}
+.upload-btn{display:inline-flex;align-items:center;gap:7px;background:var(--navy);color:white;padding:9px 20px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s}
+.upload-btn:hover{background:var(--navy-mid)}
+#file-input{display:none}
+.file-name{margin-top:11px;font-size:13px;font-weight:600;color:var(--navy);display:none}
+.ai-status{margin-top:16px;padding:13px 17px;border-radius:10px;display:none;align-items:center;gap:11px;font-size:13px;font-weight:500}
+.ai-status.loading{background:var(--yellow-pale);border:1px solid rgba(245,196,0,.4);color:#7A6000;display:flex}
+.ai-status.success{background:var(--agri-pale);border:1px solid rgba(42,106,42,.3);color:var(--agri);display:flex}
+.ai-status.error{background:#FEF2F2;border:1px solid rgba(200,50,50,.2);color:#9B1C1C;display:flex}
+.spinner{width:15px;height:15px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.api-row{display:flex;align-items:flex-end;gap:10px;margin-top:20px;padding:17px;background:rgba(13,43,78,.04);border-radius:10px;border:1px solid rgba(13,43,78,.09)}
+.api-row .form-group{flex:1;margin:0}
+.api-test-btn{white-space:nowrap;padding:10px 16px;background:var(--navy);color:white;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0;transition:background .15s}
+.api-test-btn:hover{background:var(--navy-mid)}
+
+.logo-upload-area{border:2px dashed rgba(13,43,78,.18);border-radius:10px;padding:17px;text-align:center;cursor:pointer;background:rgba(13,43,78,.02);transition:all .2s;display:flex;align-items:center;justify-content:center;gap:12px;font-size:13px;color:var(--text-muted);min-height:64px}
+.logo-upload-area:hover{border-color:var(--navy);background:rgba(13,43,78,.04)}
+#logo-preview{max-height:44px;max-width:128px;object-fit:contain;display:none}
+#logo-input{display:none}
+
+.profile-preview{background:var(--navy);color:white;border-radius:12px;padding:20px;margin-top:16px;display:none;border-top:3px solid var(--yellow)}
+.preview-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;opacity:.55;margin-bottom:9px}
+.preview-name{font-family:'Syne',sans-serif;font-size:18px;font-weight:800}
+.preview-details{font-size:13px;opacity:.72;margin-top:5px}
+.preview-tagline{font-size:12px;font-style:italic;opacity:.6;margin-top:8px;border-top:1px solid rgba(255,255,255,.12);padding-top:8px}
+
+.info-box{padding:12px 16px;border-radius:8px;font-size:13px;line-height:1.6;margin-bottom:13px}
+.info-box.green{background:var(--agri-pale);border-left:3px solid var(--agri);color:#1A4A1A}
+.info-box.gold{background:var(--yellow-pale);border-left:3px solid var(--yellow-dark);color:#6B5200}
+
+/* Buttons */
+.btn-primary{display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:white;padding:11px 24px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:background .15s,transform .15s;box-shadow:0 2px 8px rgba(13,43,78,.2)}
+.btn-primary:hover{background:var(--navy-mid);transform:translateY(-1px);box-shadow:0 4px 14px rgba(13,43,78,.28)}
+.btn-secondary{display:inline-flex;align-items:center;gap:8px;background:white;color:var(--text);padding:10px 20px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);transition:border-color .15s,box-shadow .15s}
+.btn-secondary:hover{border-color:var(--navy);box-shadow:0 2px 8px rgba(13,43,78,.08)}
+.btn-gold{display:inline-flex;align-items:center;gap:8px;background:var(--yellow);color:var(--navy);padding:11px 24px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;border:none;transition:background .15s,box-shadow .15s;box-shadow:0 2px 8px rgba(245,196,0,.35)}
+.btn-gold:hover{background:var(--yellow-light);box-shadow:0 4px 14px rgba(245,196,0,.45)}
+.btn-row{display:flex;gap:10px;margin-top:24px;flex-wrap:wrap}
+
+/* Results */
+.results-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:22px}
+.kpi-card{background:white;border-radius:12px;padding:17px;border:1.5px solid var(--border);text-align:center;box-shadow:0 2px 8px rgba(13,43,78,.05)}
+.kpi-card.primary{background:var(--navy);border-color:var(--navy);color:white;border-top:3px solid var(--yellow)}
+.kpi-card.gold-bg{background:var(--yellow-pale);border-color:rgba(245,196,0,.4)}
+.kpi-label{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;opacity:.6;margin-bottom:6px}
+.kpi-value{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--navy)}
+.kpi-card.primary .kpi-value{color:var(--yellow)}
+.kpi-card.primary .kpi-label{color:rgba(255,255,255,.7);opacity:1}
+.kpi-card.gold-bg .kpi-value{color:var(--yellow-dark)}
+.kpi-sub{font-size:11px;color:var(--text-muted);margin-top:3px}
+.kpi-card.primary .kpi-sub{color:rgba(255,255,255,.55)}
+
+.results-detail{background:white;border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 2px 8px rgba(13,43,78,.04)}
+.detail-title{font-family:'Syne',sans-serif;font-weight:800;font-size:13px;margin-bottom:13px;color:var(--navy)}
+.detail-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}
+.detail-row:last-child{border-bottom:none;font-weight:700;font-size:14px;padding-top:10px}
+.detail-row span:last-child{font-weight:600}
+.detail-row.saving span:last-child{color:var(--agri);font-weight:700}
+.detail-row.cost span:last-child{color:var(--yellow-dark)}
+
+.bar-chart{background:white;border-radius:12px;padding:20px;border:1px solid var(--border);margin-bottom:16px;box-shadow:0 2px 8px rgba(13,43,78,.04)}
+.bar-item{display:flex;align-items:center;gap:12px;margin-bottom:11px}
+.bar-item:last-child{margin-bottom:0}
+.bar-label{font-size:11px;font-weight:600;color:var(--text-muted);width:130px;flex-shrink:0;text-align:right}
+.bar-track{flex:1;height:24px;background:rgba(13,43,78,.06);border-radius:6px;overflow:visible;position:relative}
+.bar-fill{height:100%;border-radius:6px;min-width:2px;position:relative;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.bar-fill.green{background:var(--agri)}
+.bar-fill.green-light{background:var(--agri-light)}
+.bar-fill.gold{background:var(--yellow)}
+.bar-fill.dark{background:var(--navy)}
+.bar-val{position:absolute;right:-5px;top:50%;transform:translate(100%,-50%);font-size:11px;font-weight:700;white-space:nowrap;padding-left:7px;color:var(--text)}
+
+.proj-table{background:white;border-radius:12px;border:1px solid var(--border);overflow:hidden;margin-bottom:16px;box-shadow:0 2px 8px rgba(13,43,78,.04)}
+.proj-table table{width:100%;border-collapse:collapse;font-size:13px}
+.proj-table thead th{background:var(--navy);color:white;padding:10px 13px;text-align:left;font-weight:600;font-size:10px;letter-spacing:.5px;text-transform:uppercase}
+.proj-table tbody tr:nth-child(even){background:rgba(13,43,78,.03)}
+.proj-table tbody td{padding:8px 13px;border-bottom:1px solid var(--border)}
+.proj-table tbody tr:last-child td{border-bottom:none;font-weight:700;background:var(--yellow-pale)}
+.proj-table .green{color:var(--agri);font-weight:600}
+.proj-table .gold{color:var(--yellow-dark);font-weight:600}
+
+/* ════════════════════
+   CLIENT PAGE
+════════════════════ */
+.client-hero{text-align:center;padding:52px 24px 30px;max-width:540px;margin:0 auto}
+.client-hero h2{font-family:'Syne',sans-serif;font-size:clamp(26px,5vw,40px);font-weight:800;line-height:1.1;margin-bottom:11px;color:var(--navy)}
+.client-hero h2 em{font-style:italic;color:var(--agri);font-family:'Source Serif 4',serif}
+.client-hero p{font-size:15px;color:var(--text-muted);line-height:1.65}
+
+.client-card{background:white;border-radius:18px;padding:30px;max-width:540px;margin:0 auto 18px;border:1px solid var(--border);box-shadow:0 4px 18px rgba(13,43,78,.07)}
+.slider-group{margin-bottom:20px}
+.slider-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.slider-val{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--navy)}
+input[type=range]{width:100%;-webkit-appearance:none;height:5px;background:var(--border);border-radius:3px;outline:none;border:none;padding:0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;background:var(--navy);border-radius:50%;cursor:pointer;border:3px solid white;box-shadow:0 2px 6px rgba(13,43,78,.25)}
+.btn-calc{
+  width:100%;background:var(--navy);color:white;
+  padding:13px;border-radius:10px;
+  font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;
+  cursor:pointer;border:none;transition:background .15s;margin-top:5px;
+  border-top:2px solid var(--yellow);
+  box-shadow:0 4px 14px rgba(13,43,78,.2);
+}
+.btn-calc:hover{background:var(--navy-mid)}
+.results-client{background:white;border-radius:18px;padding:28px;max-width:540px;margin:0 auto 18px;border:1px solid var(--border);display:none;box-shadow:0 4px 18px rgba(13,43,78,.07)}
+.results-client.show{display:block;animation:fadeUp .4s ease}
+.result-hero-box{background:var(--navy);border-radius:12px;padding:22px;text-align:center;margin-bottom:20px;color:white;border-top:3px solid var(--yellow)}
+.result-hero-box .rlabel{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;opacity:.55;margin-bottom:4px}
+.result-hero-box .rbig{font-family:'Syne',sans-serif;font-size:44px;font-weight:800;color:var(--yellow)}
+.result-hero-box .rsub{font-size:13px;opacity:.7;margin-top:4px}
+.result-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px}
+.result-row:last-child{border-bottom:none;font-weight:700}
+.result-row .green{color:var(--agri);font-weight:700}
+.teaser-box{background:var(--navy);border-radius:18px;padding:26px;max-width:540px;margin:0 auto 44px;text-align:center;color:white;display:none;border-top:3px solid var(--yellow);box-shadow:0 8px 28px rgba(13,43,78,.18)}
+.teaser-box h3{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:8px}
+.teaser-box p{font-size:13px;opacity:.7;margin-bottom:16px;line-height:1.6}
+.teaser-price{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--yellow);margin-bottom:2px}
+.teaser-price-sub{font-size:12px;opacity:.5;margin-bottom:20px}
+
+/* ─── MODAL ─── */
+.modal-overlay{position:fixed;inset:0;background:rgba(13,43,78,.6);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.show{opacity:1;pointer-events:all}
+.modal{background:white;border-radius:20px;padding:38px;max-width:440px;width:90%;text-align:center;transform:scale(.95);transition:transform .2s;border-top:4px solid var(--yellow)}
+.modal-overlay.show .modal{transform:scale(1)}
+.modal-icon{font-size:46px;margin-bottom:13px}
+.modal-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:8px;color:var(--navy)}
+.modal-sub{font-size:14px;color:var(--text-muted);margin-bottom:22px;line-height:1.6}
+.modal-price{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;color:var(--navy);margin-bottom:4px}
+.modal-price-sub{font-size:12px;color:var(--text-muted);margin-bottom:22px}
+
+/* ─── FOOTER ─── */
+.site-footer{background:var(--navy);border-top:3px solid var(--yellow);padding:22px 52px;display:flex;justify-content:space-between;align-items:center}
+.footer-note{font-size:12px;color:rgba(255,255,255,.4)}
+.footer-links{display:flex;gap:18px}
+.footer-links a{font-size:12px;color:rgba(255,255,255,.4);text-decoration:none;transition:color .15s}
+.footer-links a:hover{color:var(--yellow)}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:880px){
+  header{padding:0 18px}
+  nav{display:none}
+  .hero-wrap{padding:52px 18px 90px;clip-path:polygon(0 0,100% 0,100% 88%,0 100%)}
+  .who-section,.sims-section{padding:0 18px 44px}
+  .who-grid{grid-template-columns:1fr}
+  .sim-grid{grid-template-columns:1fr 1fr}
+  .stats-bar{margin:0 18px 44px;grid-template-columns:1fr 1fr;padding:22px}
+  .site-footer{padding:18px;flex-direction:column;gap:12px;text-align:center}
+  .adv-layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .adv-main{padding:20px 18px}
+  .results-grid{grid-template-columns:1fr 1fr}
+  .form-grid{grid-template-columns:1fr}
+  .form-group.full{grid-column:1}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     SHARED HEADER
+══════════════════════════════════════════ -->
+<header id="main-header">
+  <div class="logo" onclick="showPage('home')">
+    <div class="logo-mark">R</div>
+    <span class="logo-text">Retraite <span>&amp; Fiscalité</span></span>
+  </div>
+  <div class="header-right" id="header-right">
+    <nav>
+      <button onclick="showPage('home')">Simulateurs</button>
+      <button onclick="showPage('conseiller')" class="btn-nav">Espace Conseiller</button>
+    </nav>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════
+     PAGE: HOME
+══════════════════════════════════════════ -->
+<div class="page active" id="page-home">
+
+  <div class="hero-wrap">
+    <section class="hero">
+      <div class="hero-badge">Simulateur d'économies fiscales</div>
+      <h1>Faites baisser vos impôts<br>en augmentant <em>votre retraite</em></h1>
+      <p class="hero-sub">Des simulateurs précis pour optimiser la fiscalité des agriculteurs et des TNS. Résultats instantanés, export PDF professionnel.</p>
+    </section>
+  </div>
+
+  <section class="who-section">
+    <div class="who-label">Qui êtes-vous ?</div>
+    <div class="who-grid">
+      <button class="who-card conseiller" onclick="showPage('conseiller')">
+        <div class="card-icon">🧑‍💼</div>
+        <div class="card-tag">Professionnel</div>
+        <div class="card-title">Je suis<br>Conseiller</div>
+        <p class="card-desc">Préparez des projets clients complets avec extraction IA de l'avis d'imposition et export PDF à vos couleurs.</p>
+        <ul class="card-features">
+          <li>Upload + extraction IA de l'avis d'imposition</li>
+          <li>Simulation complète IR + cotisations MSA</li>
+          <li>Projection retraite sur 10–20 ans</li>
+          <li>Export PDF personnalisé à votre logo</li>
+          <li>3 simulations gratuites, puis abonnement</li>
+        </ul>
+        <div class="card-cta">Accéder au simulateur <div class="cta-arrow">→</div></div>
+      </button>
+      <button class="who-card client" onclick="showPage('client')">
+        <div class="card-icon">🌾</div>
+        <div class="card-tag">Particulier</div>
+        <div class="card-title">Je suis<br>Agriculteur</div>
+        <p class="card-desc">Estimez rapidement votre économie d'impôt en quelques clics, sans justificatifs à fournir.</p>
+        <ul class="card-features">
+          <li>Saisie simplifiée en 2 minutes</li>
+          <li>Résultat instantané — gratuit</li>
+          <li>Rapport détaillé par email — 10 €</li>
+          <li>Sans engagement, sans compte</li>
+        </ul>
+        <div class="card-cta">Estimer mon économie <div class="cta-arrow">→</div></div>
+      </button>
+    </div>
+  </section>
+
+  <section class="sims-section">
+    <div class="section-title">Les simulateurs</div>
+    <div class="section-sub">Calibrés sur le barème fiscal en vigueur</div>
+    <div class="sim-grid">
+      <button class="sim-card sim-agri" onclick="showPage('conseiller')">
+        <span class="sim-badge">Disponible</span>
+        <div class="sim-icon-wrap"><span class="sim-emoji">🌾</span></div>
+        <div class="sim-name">Retraite Agriculteur</div>
+        <p class="sim-desc">Contrat Madelin / PER individuel. Économie IR + cotisations MSA.</p>
+      </button>
+      <div class="sim-card sim-tns soon">
+        <span class="sim-badge">Bientôt</span>
+        <div class="sim-icon-wrap"><span class="sim-emoji">🏢</span></div>
+        <div class="sim-name">Retraite TNS</div>
+        <p class="sim-desc">Travailleurs non-salariés. PER, Madelin, optimisation de rémunération.</p>
+      </div>
+      <div class="sim-card sim-ir soon">
+        <span class="sim-badge">Bientôt</span>
+        <div class="sim-icon-wrap"><span class="sim-emoji">📉</span></div>
+        <div class="sim-name">Baisser mon IR</div>
+        <p class="sim-desc">Défiscalisation, dons, investissements. Toutes niches fiscales IR.</p>
+      </div>
+      <div class="sim-card sim-soc soon">
+        <span class="sim-badge">Bientôt</span>
+        <div class="sim-icon-wrap"><span class="sim-emoji">⚖️</span></div>
+        <div class="sim-name">SAS ou SARL ?</div>
+        <p class="sim-desc">Comparateur de régimes. Dividendes, rémunération, charges sociales.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="stats-bar">
+    <div class="stat-item"><span class="stat-value">46 368 €</span><span class="stat-label">PASS 2024</span></div>
+    <div class="stat-item"><span class="stat-value">41 %</span><span class="stat-label">TMI maximale IR</span></div>
+    <div class="stat-item"><span class="stat-value">~34 %</span><span class="stat-label">Taux MSA chef d'exploit.</span></div>
+    <div class="stat-item"><span class="stat-value">10 %</span><span class="stat-label">Plafond déduction PER</span></div>
+  </div>
+
+  <footer class="site-footer">
+    <span class="footer-note">© 2025 Retraite &amp; Fiscalité — Outil d'aide à la décision, ne se substitue pas à un conseil professionnel.</span>
+    <div class="footer-links"><a href="#">Mentions légales</a><a href="#">CGU</a><a href="#">Contact</a></div>
+  </footer>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE: CONSEILLER
+══════════════════════════════════════════ -->
+<div class="page" id="page-conseiller">
+  <div class="adv-layout">
+    <aside class="sidebar">
+      <div class="sidebar-title">Étapes</div>
+      <div class="step-item active" data-step="1" onclick="goToStep(1)">
+        <div class="step-num"><span>1</span></div>
+        <div><div class="step-name">Profil conseiller</div><div class="step-sub">Vos coordonnées</div></div>
+      </div>
+      <div class="step-item" data-step="2" onclick="goToStep(2)">
+        <div class="step-num"><span>2</span></div>
+        <div><div class="step-name">Avis d'imposition</div><div class="step-sub">Upload + extraction IA</div></div>
+      </div>
+      <div class="step-item" data-step="3" onclick="goToStep(3)">
+        <div class="step-num"><span>3</span></div>
+        <div><div class="step-name">Données client</div><div class="step-sub">Revenus &amp; paramètres</div></div>
+      </div>
+      <div class="step-item" data-step="4" onclick="goToStep(4)">
+        <div class="step-num"><span>4</span></div>
+        <div><div class="step-name">Résultats</div><div class="step-sub">Simulation complète</div></div>
+      </div>
+      <div class="step-item" data-step="5" onclick="goToStep(5)">
+        <div class="step-num"><span>5</span></div>
+        <div><div class="step-name">Export PDF</div><div class="step-sub">Rapport client</div></div>
+      </div>
+      <div class="sim-counter">
+        <div class="counter-label">Simulations gratuites</div>
+        <div class="counter-dots">
+          <div class="dot" id="dot1"></div><div class="dot" id="dot2"></div><div class="dot" id="dot3"></div>
+        </div>
+        <div class="counter-text" id="counter-text">0 / 3 utilisées</div>
+      </div>
+    </aside>
+
+    <main class="adv-main">
+
+      <!-- STEP 1 -->
+      <div class="step-panel active" id="step-1">
+        <div class="panel-title">Votre profil</div>
+        <p class="panel-sub">Ces informations apparaîtront sur tous vos documents clients. Elles sont sauvegardées localement.</p>
+        <div class="form-grid">
+          <div class="form-group"><label>Prénom &amp; Nom</label><input type="text" id="adv-name" placeholder="Jean Dupont" oninput="updatePreview()"></div>
+          <div class="form-group"><label>Cabinet / Société</label><input type="text" id="adv-firm" placeholder="Cabinet Dupont Conseil" oninput="updatePreview()"></div>
+          <div class="form-group"><label>Téléphone</label><input type="tel" id="adv-phone" placeholder="06 00 00 00 00" oninput="updatePreview()"></div>
+          <div class="form-group"><label>Email</label><input type="email" id="adv-email" placeholder="jean@cabinet.fr" oninput="updatePreview()"></div>
+          <div class="form-group full"><label>Accroche commerciale</label><textarea id="adv-tagline" placeholder="Spécialiste de l'optimisation fiscale des agriculteurs depuis 15 ans…" oninput="updatePreview()"></textarea></div>
+          <div class="form-group full">
+            <label>Votre logo</label>
+            <div class="logo-upload-area" onclick="document.getElementById('logo-input').click()">
+              <img id="logo-preview" src="" alt="Logo">
+              <span id="logo-placeholder">📷 Cliquer pour uploader votre logo (PNG, JPG)</span>
+            </div>
+            <input type="file" id="logo-input" accept="image/*" onchange="handleLogoUpload(event)">
+          </div>
+        </div>
+        <div class="profile-preview" id="profile-preview">
+          <div class="preview-label">Aperçu dans le PDF client</div>
+          <div class="preview-name" id="prev-name"></div>
+          <div class="preview-details" id="prev-details"></div>
+          <div class="preview-tagline" id="prev-tagline"></div>
+        </div>
+        <div class="api-row">
+          <div class="form-group"><label>Clé API Anthropic (extraction IA)</label><input type="password" id="api-key" placeholder="sk-ant-..."></div>
+          <button class="api-test-btn" onclick="testApiKey()">Tester</button>
+        </div>
+        <div class="info-box green" style="margin-top:11px;font-size:12px">🔒 Votre clé API est stockée uniquement dans votre navigateur et n'est jamais envoyée à nos serveurs.</div>
+        <div class="btn-row"><button class="btn-primary" onclick="saveProfileAndNext()">Enregistrer et continuer →</button></div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="step-panel" id="step-2">
+        <div class="panel-title">Avis d'imposition</div>
+        <p class="panel-sub">Uploadez l'avis d'imposition du client. Claude en extrait automatiquement les données clés.</p>
+        <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="handleDrag(event)" ondrop="handleDrop(event)">
+          <div class="upload-icon" id="upload-icon">📄</div>
+          <div class="upload-title" id="upload-title">Glisser-déposer l'avis d'imposition</div>
+          <div class="upload-sub">PDF ou image (JPG, PNG) — L'IA extrait automatiquement toutes les données</div>
+          <div class="upload-btn">📎 Choisir un fichier</div>
+          <input type="file" id="file-input" accept=".pdf,image/*" onchange="handleFileUpload(event)">
+          <div class="file-name" id="file-name"></div>
+        </div>
+        <div class="ai-status" id="ai-status"><div class="spinner"></div><span id="ai-status-text">Analyse en cours…</span></div>
+        <div id="extracted-preview" style="display:none;margin-top:18px"><div class="info-box green">✅ Extraction IA réussie — vérifiez à l'étape suivante.</div></div>
+        <div class="info-box gold" style="margin-top:14px">💡 Pas d'avis d'imposition ? Saisissez les données manuellement à l'étape suivante.</div>
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="goToStep(1)">← Retour</button>
+          <button class="btn-primary" onclick="goToStep(3)">Continuer →</button>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="step-panel" id="step-3">
+        <div class="panel-title">Données client</div>
+        <p class="panel-sub">Vérifiez les données extraites ou saisissez-les manuellement.</p>
+        <div class="form-grid">
+          <div class="form-group"><label>Prénom &amp; Nom du client</label><input type="text" id="cli-name" placeholder="Marie Martin"></div>
+          <div class="form-group"><label>Âge actuel</label><input type="number" id="cli-age" value="45" min="18" max="65"></div>
+          <hr class="section-sep">
+          <div class="form-group"><label>Régime fiscal</label><select id="cli-regime"><option value="reel">Régime réel</option><option value="micro">Micro-BA (forfait)</option></select></div>
+          <div class="form-group"><label>Quotient familial</label><select id="cli-parts"><option value="1">1 part (célibataire)</option><option value="1.5">1,5 parts</option><option value="2" selected>2 parts (couple)</option><option value="2.5">2,5 parts</option><option value="3">3 parts</option><option value="3.5">3,5 parts</option><option value="4">4 parts</option></select></div>
+          <div class="form-group"><label>Revenu professionnel net</label><div class="input-euro"><input type="number" id="cli-revenu" value="55000" min="0"><span class="euro-sym">€</span></div></div>
+          <div class="form-group"><label>Autres revenus du foyer</label><div class="input-euro"><input type="number" id="cli-autres" value="0" min="0"><span class="euro-sym">€</span></div></div>
+          <div class="form-group"><label>Impôt net payé</label><div class="input-euro"><input type="number" id="cli-impot" placeholder="8500"><span class="euro-sym">€</span></div></div>
+          <div class="form-group"><label>Plafond PER non utilisé (reports)</label><div class="input-euro"><input type="number" id="cli-plafond-report" value="0" min="0"><span class="euro-sym">€</span></div></div>
+          <hr class="section-sep">
+          <div class="form-group"><label>Versement annuel envisagé</label><div class="input-euro"><input type="number" id="cli-versement" value="5000" min="0"><span class="euro-sym">€</span></div></div>
+          <div class="form-group"><label>Âge de départ à la retraite</label><input type="number" id="cli-retraite-age" value="65" min="50" max="75"></div>
+          <div class="form-group"><label>Taux de rendement estimé</label><select id="cli-rendement"><option value="2">2 % (prudent)</option><option value="3.5" selected>3,5 % (équilibré)</option><option value="5">5 % (dynamique)</option><option value="7">7 % (offensif)</option></select></div>
+          <div class="form-group"><label>Durée de projection</label><select id="cli-duree"><option value="10">10 ans</option><option value="15" selected>15 ans</option><option value="20">20 ans</option></select></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="goToStep(2)">← Retour</button>
+          <button class="btn-primary" onclick="runSimulation()">Calculer →</button>
+        </div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div class="step-panel" id="step-4">
+        <div class="panel-title">Résultats</div>
+        <p class="panel-sub">Simulation pour <strong id="res-client-name">le client</strong></p>
+        <div class="results-grid" id="results-kpis"></div>
+        <div class="results-detail" id="results-detail-ir"></div>
+        <div class="bar-chart" id="results-bars"></div>
+        <div class="proj-table" id="results-projection"></div>
+        <div class="info-box green">📌 Résultats calculés sur la base du barème IR 2024 et d'un taux MSA chef d'exploitation de 34 %. À valider avec l'expert-comptable.</div>
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="goToStep(3)">← Modifier</button>
+          <button class="btn-primary" onclick="goToStep(5)">Générer le PDF →</button>
+        </div>
+      </div>
+
+      <!-- STEP 5 -->
+      <div class="step-panel" id="step-5">
+        <div class="panel-title">Export du rapport client</div>
+        <p class="panel-sub">Personnalisez et téléchargez le rapport PDF.</p>
+        <div class="form-grid">
+          <div class="form-group full"><label>Message d'introduction</label><textarea id="pdf-intro" rows="4">Suite à notre analyse de votre situation fiscale, nous avons étudié l'impact d'un versement sur un contrat PER individuel (ex-Madelin). Voici les résultats de cette simulation.</textarea></div>
+        </div>
+        <div style="margin:18px 0">
+          <div class="flabel" style="margin-bottom:10px">Sections à inclure</div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <label style="display:flex;align-items:center;gap:9px;font-size:13px;text-transform:none;letter-spacing:0;cursor:pointer;font-weight:400"><input type="checkbox" id="inc-profile" checked> Profil du conseiller</label>
+            <label style="display:flex;align-items:center;gap:9px;font-size:13px;text-transform:none;letter-spacing:0;cursor:pointer;font-weight:400"><input type="checkbox" id="inc-donnees" checked> Récapitulatif des données</label>
+            <label style="display:flex;align-items:center;gap:9px;font-size:13px;text-transform:none;letter-spacing:0;cursor:pointer;font-weight:400"><input type="checkbox" id="inc-simulation" checked> Simulation chiffrée (IR + MSA)</label>
+            <label style="display:flex;align-items:center;gap:9px;font-size:13px;text-transform:none;letter-spacing:0;cursor:pointer;font-weight:400"><input type="checkbox" id="inc-projection" checked> Projection retraite</label>
+            <label style="display:flex;align-items:center;gap:9px;font-size:13px;text-transform:none;letter-spacing:0;cursor:pointer;font-weight:400"><input type="checkbox" id="inc-disclaimer" checked> Mentions légales</label>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="goToStep(4)">← Retour</button>
+          <button class="btn-gold" onclick="generatePDF()">⬇ Télécharger le PDF</button>
+        </div>
+        <div class="info-box gold" style="margin-top:18px">🎉 Il vous reste <span id="remaining-sims">3</span> simulations gratuites.</div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE: CLIENT
+══════════════════════════════════════════ -->
+<div class="page" id="page-client">
+  <div class="client-hero">
+    <h2>Combien pouvez-vous<br>économiser <em>sur vos impôts</em> ?</h2>
+    <p>Saisissez quelques informations et obtenez une estimation instantanée et gratuite.</p>
+  </div>
+
+  <div class="client-card">
+    <div class="form-group" style="margin-bottom:18px">
+      <label>Votre situation familiale</label>
+      <select id="c-parts"><option value="1">Célibataire (1 part)</option><option value="2" selected>En couple (2 parts)</option><option value="2.5">En couple + 1 enfant</option><option value="3">En couple + 2 enfants</option><option value="3.5">En couple + 3 enfants</option></select>
+    </div>
+    <div class="slider-group">
+      <div class="flabel">Revenu professionnel agricole net</div>
+      <div class="slider-row"><span style="font-size:13px;color:var(--text-muted)">Revenu annuel</span><span class="slider-val" id="rev-val">55 000 €</span></div>
+      <input type="range" id="c-revenu" min="10000" max="200000" step="1000" value="55000" oninput="updateSlider('c-revenu','rev-val')">
+    </div>
+    <div class="slider-group">
+      <div class="flabel">Versement annuel envisagé sur un PER</div>
+      <div class="slider-row"><span style="font-size:13px;color:var(--text-muted)">Versement</span><span class="slider-val" id="vers-val">5 000 €</span></div>
+      <input type="range" id="c-versement" min="500" max="30000" step="500" value="5000" oninput="updateSlider('c-versement','vers-val')">
+    </div>
+    <div class="form-group" style="margin-bottom:18px">
+      <label>Régime fiscal</label>
+      <select id="c-regime"><option value="reel">Régime réel</option><option value="micro">Micro-BA (forfait)</option></select>
+    </div>
+    <button class="btn-calc" onclick="calcClient()">Calculer mon économie →</button>
+  </div>
+
+  <div class="results-client" id="results-client">
+    <div class="result-hero-box">
+      <div class="rlabel">Économie estimée par an</div>
+      <div class="rbig" id="r-total">—</div>
+      <div class="rsub">Pour un versement de <span id="r-versement">—</span></div>
+    </div>
+    <div class="result-row"><span>Impôt avant versement</span><span id="r-ir-avant">—</span></div>
+    <div class="result-row"><span>Impôt après versement</span><span id="r-ir-apres">—</span></div>
+    <div class="result-row"><span>Économie IR</span><span class="green" id="r-econ-ir">—</span></div>
+    <div class="result-row" id="r-msa-row"><span>Économie cotisations MSA</span><span class="green" id="r-econ-msa">—</span></div>
+    <div class="result-row"><span>Coût réel de votre versement</span><span id="r-cout">—</span></div>
+    <div style="margin-top:18px;padding:13px;background:rgba(45,80,22,.06);border-radius:8px;font-size:13px;color:#2D5016;line-height:1.6">
+      💡 Pour un versement de <strong id="r-versement2">—</strong>, votre coût réel est de seulement <strong id="r-cout2">—</strong> grâce aux économies fiscales et sociales.
+    </div>
+  </div>
+
+  <div class="teaser-box" id="teaser-box">
+    <h3>Obtenez le rapport complet</h3>
+    <p>Projection sur 10–20 ans, capital retraite estimé, comparatif avant/après, plafonds détaillés…</p>
+    <div class="teaser-price">10 €</div>
+    <div class="teaser-price-sub">Paiement unique — PDF envoyé par email</div>
+    <div style="margin-bottom:14px">
+      <input type="email" id="client-email" placeholder="Votre email pour recevoir le rapport" style="width:100%;padding:11px 14px;border-radius:8px;border:1.5px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:white;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;margin-bottom:10px" oninput="this.style.borderColor=this.value?'var(--yellow)':'rgba(255,255,255,.3)'">
+    </div>
+    <button class="btn-gold" id="btn-rapport" onclick="stripeCheckout('rapport')">
+      <span id="btn-rapport-text">Recevoir le rapport — 10 €</span>
+      <span id="btn-rapport-spinner" style="display:none">⏳</span>
+    </button>
+    <div style="margin-top:14px;font-size:12px;opacity:.5">Ou faites appel à un conseiller pour une simulation personnalisée</div>
+  </div>
+
+  <footer class="site-footer">
+    <span class="footer-note">© 2025 Retraite &amp; Fiscalité — Outil d'aide à la décision.</span>
+    <div class="footer-links"><a href="#">Mentions légales</a><a href="#">Contact</a></div>
+  </footer>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-abo">
+  <div class="modal">
+    <div class="modal-icon">🔒</div>
+    <div class="modal-title">Simulations gratuites épuisées</div>
+    <p class="modal-sub">Vous avez utilisé vos 3 simulations gratuites. Passez à l'abonnement pour un accès illimité.</p>
+    <div class="modal-price">29 €<span style="font-size:17px;font-weight:400"> / mois</span></div>
+    <div class="modal-price-sub">Simulations illimitées · PDF personnalisés · Tous les simulateurs</div>
+    <div style="display:flex;gap:11px;justify-content:center">
+      <button class="btn-primary" id="btn-subscribe" onclick="stripeCheckout('abonnement')">
+        <span id="btn-subscribe-text">S'abonner — 29 €/mois</span>
+        <span id="btn-subscribe-spinner" style="display:none">⏳</span>
+      </button>
+      <button class="btn-secondary" onclick="closeModal()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════
+// PAGE NAVIGATION
+// ════════════════════════════════════
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Update header
+  const hr = document.getElementById('header-right');
+  if (name === 'home') {
+    hr.innerHTML = `<nav><button onclick="showPage('home')">Simulateurs</button><button onclick="showPage('conseiller')" class="btn-nav">Espace Conseiller</button></nav>`;
+  } else if (name === 'conseiller') {
+    hr.innerHTML = `<span class="header-badge">Espace Conseiller</span><button class="back-link" onclick="showPage('home')">← Accueil</button>`;
+  } else if (name === 'client') {
+    hr.innerHTML = `<span class="header-badge">Espace Agriculteur</span><button class="back-link" onclick="showPage('home')">← Accueil</button>`;
+  }
+}
+
+// ════════════════════════════════════
+// ADVISOR STATE
+// ════════════════════════════════════
+let simResults = {};
+let logoDataUrl = null;
+let simulationCount = parseInt(localStorage.getItem('simCount') || '0');
+
+window.onload = function() { loadProfile(); updateCounter(); };
+
+// ─── STEPS ───
+function goToStep(n) {
+  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.step-item').forEach(s => s.classList.remove('active'));
+  document.getElementById('step-' + n).classList.add('active');
+  document.querySelector('[data-step="' + n + '"]').classList.add('active');
+  document.querySelector('.adv-main').scrollTop = 0;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─── PROFILE ───
+function updatePreview() {
+  const name = document.getElementById('adv-name').value;
+  const firm = document.getElementById('adv-firm').value;
+  const phone = document.getElementById('adv-phone').value;
+  const email = document.getElementById('adv-email').value;
+  const tagline = document.getElementById('adv-tagline').value;
+  const preview = document.getElementById('profile-preview');
+  if (name || firm) {
+    preview.style.display = 'block';
+    document.getElementById('prev-name').textContent = name || 'Votre Nom';
+    document.getElementById('prev-details').textContent = [firm, phone, email].filter(Boolean).join(' · ');
+    document.getElementById('prev-tagline').textContent = tagline || '';
+  }
+}
+function saveProfileAndNext() {
+  const profile = {
+    name: document.getElementById('adv-name').value,
+    firm: document.getElementById('adv-firm').value,
+    phone: document.getElementById('adv-phone').value,
+    email: document.getElementById('adv-email').value,
+    tagline: document.getElementById('adv-tagline').value,
+    apiKey: document.getElementById('api-key').value
+  };
+  localStorage.setItem('advProfile', JSON.stringify(profile));
+  goToStep(2);
+}
+function loadProfile() {
+  const saved = localStorage.getItem('advProfile');
+  if (!saved) return;
+  const p = JSON.parse(saved);
+  document.getElementById('adv-name').value = p.name || '';
+  document.getElementById('adv-firm').value = p.firm || '';
+  document.getElementById('adv-phone').value = p.phone || '';
+  document.getElementById('adv-email').value = p.email || '';
+  document.getElementById('adv-tagline').value = p.tagline || '';
+  document.getElementById('api-key').value = p.apiKey || '';
+  updatePreview();
+}
+
+// ─── LOGO ───
+function handleLogoUpload(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    logoDataUrl = ev.target.result;
+    document.getElementById('logo-preview').src = logoDataUrl;
+    document.getElementById('logo-preview').style.display = 'block';
+    document.getElementById('logo-placeholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+// ─── API TEST ───
+async function testApiKey() {
+  const key = document.getElementById('api-key').value;
+  if (!key) { alert('Entrez votre clé API d\'abord.'); return; }
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 20, messages: [{ role: 'user', content: 'Bonjour' }] })
+    });
+    if (res.ok) alert('✅ Clé API valide !');
+    else { const d = await res.json(); alert('❌ ' + (d.error?.message || res.status)); }
+  } catch(e) { alert('❌ Erreur réseau : ' + e.message); }
+}
+
+// ─── FILE UPLOAD ───
+function handleDrag(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('drag'); }
+function handleDrop(e) { e.preventDefault(); document.getElementById('upload-zone').classList.remove('drag'); const f = e.dataTransfer.files[0]; if(f) processFile(f); }
+function handleFileUpload(e) { const f = e.target.files[0]; if(f) processFile(f); }
+
+function processFile(file) {
+  document.getElementById('file-name').style.display = 'block';
+  document.getElementById('file-name').textContent = '📎 ' + file.name;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const b64 = ev.target.result.split(',')[1];
+    document.getElementById('upload-zone').classList.add('success');
+    document.getElementById('upload-icon').textContent = '✅';
+    document.getElementById('upload-title').textContent = 'Fichier prêt — Extraction IA en cours…';
+    extractWithAI(b64, file.type);
+  };
+  reader.readAsDataURL(file);
+}
+
+async function extractWithAI(base64, mimeType) {
+  const profile = JSON.parse(localStorage.getItem('advProfile') || '{}');
+  const apiKey = document.getElementById('api-key').value || profile.apiKey;
+  const statusEl = document.getElementById('ai-status');
+  statusEl.className = 'ai-status loading';
+  document.getElementById('ai-status-text').textContent = 'Claude analyse l\'avis d\'imposition…';
+  if (!apiKey) { statusEl.className = 'ai-status error'; document.getElementById('ai-status-text').textContent = 'Aucune clé API — saisie manuelle à l\'étape suivante.'; return; }
+  try {
+    const isImage = mimeType.startsWith('image/');
+    const contentBlock = isImage
+      ? { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64 } }
+      : { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } };
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-beta': 'pdfs-2024-09-25' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: [contentBlock, { type: 'text', text: 'Tu es un expert fiscal français. Analyse cet avis d\'imposition et extrait au format JSON strict (sans markdown) : {"revenu_fiscal_reference":number,"revenu_imposable":number,"impot_net":number,"nombre_parts":number,"tmi":number,"revenus_agricoles":number,"revenus_autres":number,"annee_imposition":number}. Si une valeur est introuvable, mets null. Réponds UNIQUEMENT avec le JSON.' }] }] })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || 'Erreur API');
+    const text = data.content.map(b => b.text || '').join('');
+    const extracted = JSON.parse(text.replace(/```json|```/g, '').trim());
+    if (extracted.revenu_imposable) document.getElementById('cli-revenu').value = extracted.revenu_imposable;
+    if (extracted.impot_net) document.getElementById('cli-impot').value = extracted.impot_net;
+    if (extracted.nombre_parts) { const sel = document.getElementById('cli-parts'); for (let o of sel.options) { if (o.value === String(extracted.nombre_parts)) { sel.value = o.value; break; } } }
+    if (extracted.revenus_autres) document.getElementById('cli-autres').value = extracted.revenus_autres;
+    statusEl.className = 'ai-status success';
+    document.getElementById('ai-status-text').textContent = '✅ Données extraites — vérifiez à l\'étape suivante.';
+    document.getElementById('extracted-preview').style.display = 'block';
+    document.getElementById('upload-title').textContent = '✅ Extraction terminée';
+  } catch(e) {
+    statusEl.className = 'ai-status error';
+    document.getElementById('ai-status-text').textContent = '⚠️ Extraction impossible (' + e.message + ') — saisie manuelle.';
+  }
+}
+
+// ════════════════════════════════════
+// FISCAL CALCULATIONS
+// ════════════════════════════════════
+const PASS = 46368;
+const TRANCHES = [{min:0,max:11294,rate:0},{min:11294,max:28797,rate:.11},{min:28797,max:82341,rate:.30},{min:82341,max:177106,rate:.41},{min:177106,max:Infinity,rate:.45}];
+
+function calcIR(rev, parts) {
+  const qi = rev / parts; let imp = 0, tmi = 0;
+  for (const t of TRANCHES) { if (qi > t.min) { imp += (Math.min(qi,t.max)-t.min)*t.rate; if(t.rate>0&&qi>t.min) tmi=t.rate; } }
+  return { impot: Math.round(imp * parts), tmi };
+}
+function calcPlafond(rev) { return Math.min(Math.max(PASS*.1, rev*.1), PASS*.8); }
+function calcMSA(rev, regime, vers) {
+  if (regime==='micro') return { cotisations_avant:0, cotisations_apres:0, economie:0 };
+  return { cotisations_avant:Math.round(rev*.34), cotisations_apres:Math.round(Math.max(0,rev-vers)*.34), economie:Math.round(Math.min(vers,rev)*.34) };
+}
+function calcProjection(vers, taux, annees) {
+  const r = taux/100; let cap = 0; const rows = [];
+  for (let i=1;i<=annees;i++) { cap = cap*(1+r)+vers; if(i%5===0||i===1||i===annees) rows.push({annee:i,capital:Math.round(cap),versement_cumule:Math.round(vers*i)}); }
+  return rows;
+}
+
+function runSimulation() {
+  const regime = document.getElementById('cli-regime').value;
+  const parts = parseFloat(document.getElementById('cli-parts').value);
+  const revenuPro = parseFloat(document.getElementById('cli-revenu').value)||0;
+  const autresRevenus = parseFloat(document.getElementById('cli-autres').value)||0;
+  const versement = parseFloat(document.getElementById('cli-versement').value)||0;
+  const clientName = document.getElementById('cli-name').value||'le client';
+  const age = parseInt(document.getElementById('cli-age').value)||45;
+  const retraiteAge = parseInt(document.getElementById('cli-retraite-age').value)||65;
+  const rendement = parseFloat(document.getElementById('cli-rendement').value)||3.5;
+  const duree = parseInt(document.getElementById('cli-duree').value)||15;
+  const plafondReport = parseFloat(document.getElementById('cli-plafond-report').value)||0;
+
+  const revenuTotal = revenuPro + autresRevenus;
+  const plafond = calcPlafond(revenuPro) + plafondReport;
+  const versementDeductible = Math.min(versement, plafond);
+  const {impot:ir_avant, tmi:tmi_avant} = calcIR(revenuTotal, parts);
+  const {impot:ir_apres, tmi:tmi_apres} = calcIR(revenuTotal - versementDeductible, parts);
+  const msa = calcMSA(revenuPro, regime, versementDeductible);
+  const econIR = ir_avant - ir_apres;
+  const econMSA = regime==='reel' ? msa.economie : 0;
+  const econTotale = econIR + econMSA;
+  const coutReel = versement - econTotale;
+  const txEfficacite = versement>0 ? Math.round((econTotale/versement)*100) : 0;
+  const annees = Math.max(1, retraiteAge - age);
+  const projection = calcProjection(versement, rendement, Math.min(annees, duree));
+
+  simResults = { clientName, regime, parts, revenuPro, autresRevenus, revenuTotal, versement, versementDeductible, plafond, ir_avant, ir_apres, tmi_avant, tmi_apres, econIR, econMSA, econTotale, coutReel, txEfficacite, msa, age, retraiteAge, rendement, duree, projection, annees };
+  renderResults();
+  goToStep(4);
+  simulationCount++;
+  localStorage.setItem('simCount', simulationCount);
+  updateCounter();
+}
+
+function fmt(n) { return new Intl.NumberFormat('fr-FR').format(Math.round(n||0)) + ' €'; }
+function pct(n) { return Math.round(n) + ' %'; }
+
+function renderResults() {
+  const r = simResults;
+  document.getElementById('res-client-name').textContent = r.clientName;
+  document.getElementById('results-kpis').innerHTML = `
+    <div class="kpi-card primary"><div class="kpi-label">Économie totale</div><div class="kpi-value">${fmt(r.econTotale)}</div><div class="kpi-sub">IR ${fmt(r.econIR)} + MSA ${fmt(r.econMSA)}</div></div>
+    <div class="kpi-card gold-bg"><div class="kpi-label">Coût réel du versement</div><div class="kpi-value">${fmt(r.coutReel)}</div><div class="kpi-sub">Versement de ${fmt(r.versement)}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Taux d'efficacité</div><div class="kpi-value" style="color:var(--green)">${pct(r.txEfficacite)}</div><div class="kpi-sub">Économie / versement</div></div>
+    <div class="kpi-card"><div class="kpi-label">TMI avant</div><div class="kpi-value" style="color:var(--dark)">${pct(r.tmi_avant*100)}</div><div class="kpi-sub">Impôt ${fmt(r.ir_avant)}</div></div>
+    <div class="kpi-card"><div class="kpi-label">TMI après déduction</div><div class="kpi-value" style="color:var(--green-light)">${pct(r.tmi_apres*100)}</div><div class="kpi-sub">Impôt ${fmt(r.ir_apres)}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Capital retraite estimé</div><div class="kpi-value" style="color:var(--gold)">${fmt(r.projection[r.projection.length-1]?.capital||0)}</div><div class="kpi-sub">Dans ${Math.min(r.annees,r.duree)} ans à ${r.rendement}%/an</div></div>`;
+
+  document.getElementById('results-detail-ir').innerHTML = `
+    <div class="detail-title">Décomposition fiscale</div>
+    <div class="detail-row"><span>Revenu professionnel net</span><span>${fmt(r.revenuPro)}</span></div>
+    <div class="detail-row"><span>Autres revenus du foyer</span><span>${fmt(r.autresRevenus)}</span></div>
+    <div class="detail-row"><span>Revenu imposable total (avant)</span><span>${fmt(r.revenuTotal)}</span></div>
+    <div class="detail-row"><span>Plafond PER disponible</span><span>${fmt(r.plafond)}</span></div>
+    <div class="detail-row"><span>Versement déductible retenu</span><span>${fmt(r.versementDeductible)}</span></div>
+    <div class="detail-row"><span>Base imposable après déduction</span><span>${fmt(r.revenuTotal-r.versementDeductible)}</span></div>
+    <hr style="border:none;border-top:1px solid var(--border);margin:3px 0">
+    <div class="detail-row saving"><span>💚 Économie IR</span><span>${fmt(r.econIR)}</span></div>
+    ${r.regime==='reel'?`<div class="detail-row saving"><span>💚 Économie MSA (~34 %)</span><span>${fmt(r.econMSA)}</span></div>`:`<div class="detail-row"><span>MSA (micro-BA)</span><span>non applicable</span></div>`}
+    <div class="detail-row saving"><span>✅ ÉCONOMIE TOTALE</span><span>${fmt(r.econTotale)}</span></div>
+    <div class="detail-row cost"><span>💰 Coût réel du versement</span><span>${fmt(r.coutReel)}</span></div>`;
+
+  const maxVal = Math.max(r.ir_avant, r.ir_apres, r.econTotale, r.versement);
+  document.getElementById('results-bars').innerHTML = `
+    <div class="detail-title" style="margin-bottom:16px">Visualisation comparée</div>
+    ${bar('Impôt avant versement',r.ir_avant,maxVal,'dark')}
+    ${bar('Impôt après versement',r.ir_apres,maxVal,'green-light')}
+    ${r.regime==='reel'?bar('Économie MSA',r.econMSA,maxVal,'gold'):''}
+    ${bar('Économie IR',r.econIR,maxVal,'green')}
+    ${bar('Coût réel',r.coutReel,maxVal,'gold')}`;
+
+  document.getElementById('results-projection').innerHTML = `<table>
+    <thead><tr><th>Horizon</th><th>Versements cumulés</th><th>Capital estimé</th><th>Plus-value</th></tr></thead>
+    <tbody>${r.projection.map(p=>`<tr><td>Année ${p.annee}</td><td class="green">${fmt(p.versement_cumule)}</td><td class="gold">${fmt(p.capital)}</td><td class="green">+ ${fmt(p.capital-p.versement_cumule)}</td></tr>`).join('')}</tbody>
+  </table>`;
+}
+
+function bar(label, val, max, cls) {
+  const p = max>0?Math.round((val/max)*100):0;
+  return `<div class="bar-item"><div class="bar-label">${label}</div><div class="bar-track"><div class="bar-fill ${cls}" style="width:${p}%"><span class="bar-val">${fmt(val)}</span></div></div></div>`;
+}
+
+function updateCounter() {
+  const used = simulationCount;
+  for (let i=1;i<=3;i++) document.getElementById('dot'+i).className='dot'+(i<=used?' used':'');
+  document.getElementById('counter-text').textContent = used+' / 3 utilisées';
+  if(document.getElementById('remaining-sims')) document.getElementById('remaining-sims').textContent = Math.max(0,3-used);
+}
+
+// ════════════════════════════════════
+// PDF EXPORT
+// ════════════════════════════════════
+async function generatePDF() {
+  if (simulationCount > 3) { document.getElementById('modal-abo').classList.add('show'); return; }
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({unit:'mm',format:'a4'});
+  const r = simResults;
+  const profile = JSON.parse(localStorage.getItem('advProfile')||'{}');
+  const intro = document.getElementById('pdf-intro').value;
+  const green=[45,80,22],gold=[200,168,75],cream=[245,240,232],dark=[26,26,20],lightGray=[248,248,245];
+  let y=0;
+
+  doc.setFillColor(...green); doc.rect(0,0,210,42,'F');
+  if(logoDataUrl){try{doc.addImage(logoDataUrl,'PNG',12,8,0,22)}catch(e){}}
+  doc.setTextColor(...cream); doc.setFontSize(19); doc.setFont('helvetica','bold');
+  doc.text('Simulation Retraite Agriculteur',105,15,{align:'center'});
+  doc.setFontSize(10); doc.setFont('helvetica','normal');
+  doc.text('Contrat PER individuel / Madelin — Barème IR 2024',105,23,{align:'center'});
+  doc.setFillColor(...gold); doc.rect(0,42,210,2.5,'F');
+  y=52;
+
+  if(document.getElementById('inc-profile').checked&&(profile.name||profile.firm)){
+    doc.setFillColor(...lightGray); doc.roundedRect(12,y,186,26,3,3,'F');
+    doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(...dark);
+    doc.text('VOTRE CONSEILLER',18,y+6);
+    doc.setFontSize(11); doc.text(profile.name||'',18,y+13);
+    doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(107,101,88);
+    doc.text([profile.firm,profile.phone,profile.email].filter(Boolean).join('   |   '),18,y+20);
+    if(profile.tagline){doc.setFontSize(7);doc.setFont('helvetica','italic');doc.text(profile.tagline.substring(0,90),18,y+26);}
+    y+=32;
+  }
+  if(intro){
+    doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(107,101,88);
+    const lines=doc.splitTextToSize(intro,186); doc.text(lines,12,y); y+=lines.length*5+7;
+  }
+  if(document.getElementById('inc-donnees').checked){
+    pdfSectionTitle(doc,'Données de la simulation',y,green); y+=8;
+    pdfTable2(doc,[['Client',r.clientName||'—'],['Régime',r.regime==='reel'?'Réel':'Micro-BA'],['Revenu pro net',fmtN(r.revenuPro)+' €'],['Autres revenus',fmtN(r.autresRevenus)+' €'],['Parts fiscales',r.parts+' parts'],['Versement annuel',fmtN(r.versement)+' €'],['Plafond PER',fmtN(r.plafond)+' €']],12,y,[80,108]); y+=7*7+4;
+  }
+  if(document.getElementById('inc-simulation').checked){
+    pdfSectionTitle(doc,'Résultats de la simulation',y,green); y+=8;
+    const kd=[{l:'Économie IR',v:fmtN(r.econIR)+' €',c:green},{l:'Économie MSA',v:r.regime==='reel'?fmtN(r.econMSA)+' €':'N/A',c:[61,107,31]},{l:'Économie totale',v:fmtN(r.econTotale)+' €',c:gold},{l:'Coût réel',v:fmtN(r.coutReel)+' €',c:dark}];
+    kd.forEach((k,i)=>{const x=12+i*47;doc.setFillColor(...k.c);doc.roundedRect(x,y,43,19,2,2,'F');doc.setTextColor(255,255,255);doc.setFontSize(6);doc.setFont('helvetica','bold');doc.text(k.l.toUpperCase(),x+21.5,y+6,{align:'center'});doc.setFontSize(11);doc.text(k.v,x+21.5,y+14,{align:'center'});});
+    y+=25;
+    pdfTable3(doc,[['Impôt avant versement',fmtN(r.ir_avant)+' €','TMI : '+Math.round(r.tmi_avant*100)+'%'],['Impôt après versement',fmtN(r.ir_apres)+' €','TMI : '+Math.round(r.tmi_apres*100)+'%'],['Économie IR','+ '+fmtN(r.econIR)+' €',''],['Cotisations MSA (avant)',r.regime==='reel'?fmtN(r.msa.cotisations_avant)+' €':'Micro-BA',''],['Économie MSA',r.regime==='reel'?'+ '+fmtN(r.econMSA)+' €':'N/A','~34% de '+fmtN(r.versementDeductible)+' €'],['TOTAL ÉCONOMIES',fmtN(r.econTotale)+' €','Coût réel : '+fmtN(r.coutReel)+' €']],12,y,[80,56,50]); y+=6*7+6;
+  }
+  if(document.getElementById('inc-projection').checked&&r.projection.length>0){
+    if(y>220){doc.addPage();y=20;}
+    pdfSectionTitle(doc,'Projection de capital retraite',y,green); y+=7;
+    doc.setFontSize(8);doc.setFont('helvetica','italic');doc.setTextColor(107,101,88);
+    doc.text('Versement annuel : '+fmtN(r.versement)+' € — Rendement : '+r.rendement+'%/an',12,y+4); y+=9;
+    pdfTableFull(doc,[['Horizon','Versements cumulés','Capital estimé','Plus-value']],r.projection.map(p=>['Année '+p.annee,fmtN(p.versement_cumule)+' €',fmtN(p.capital)+' €','+ '+fmtN(p.capital-p.versement_cumule)+' €']),12,y,[36,50,50,50],green); y+=(r.projection.length+1)*7+6;
+  }
+  if(document.getElementById('inc-disclaimer').checked){
+    if(y>252){doc.addPage();y=20;}
+    doc.setFillColor(...cream); doc.roundedRect(12,y,186,20,2,2,'F');
+    doc.setFontSize(7);doc.setFont('helvetica','italic');doc.setTextColor(107,101,88);
+    const dl=doc.splitTextToSize('Document à caractère informatif, établi sur la base des éléments fournis. Il ne constitue pas un conseil fiscal ou juridique. Les résultats sont calculés sur la base du barème IR 2024 et d\'un taux MSA estimatif. Consultez votre expert-comptable et conseiller fiscal pour valider ce projet.',178);
+    doc.text(dl,15,y+6);
+  }
+  const pageCount=doc.internal.getNumberOfPages();
+  for(let i=1;i<=pageCount;i++){doc.setPage(i);doc.setFillColor(...green);doc.rect(0,287,210,10,'F');doc.setTextColor(...gold);doc.setFontSize(7);doc.setFont('helvetica','normal');doc.text('Retraite & Fiscalité — Simulateur Retraite Agriculteur',12,293);doc.text('Page '+i+' / '+pageCount,198,293,{align:'right'});}
+  doc.save('RetFisc_'+((r.clientName||'client').replace(/\s+/g,'_'))+'_'+new Date().toISOString().slice(0,10)+'.pdf');
+}
+
+function pdfSectionTitle(doc,text,y,color){doc.setFillColor(...color);doc.rect(12,y,186,6.5,'F');doc.setTextColor(255,255,255);doc.setFontSize(8);doc.setFont('helvetica','bold');doc.text(text.toUpperCase(),15,y+4.5);}
+function pdfTable2(doc,rows,x,y,w){rows.forEach((row,i)=>{if(i%2===0){doc.setFillColor(248,248,245);doc.rect(x,y,w[0]+w[1],6.5,'F');}doc.setFontSize(8.5);doc.setFont('helvetica','bold');doc.setTextColor(107,101,88);doc.text(row[0],x+3,y+4.5);doc.setFont('helvetica','normal');doc.setTextColor(26,26,20);doc.text(row[1],x+w[0]+3,y+4.5);y+=7;});}
+function pdfTable3(doc,rows,x,y,w){rows.forEach((row,i)=>{const last=i===rows.length-1;if(last){doc.setFillColor(45,80,22);doc.rect(x,y,w[0]+w[1]+w[2],7,'F');doc.setTextColor(255,255,255);}else if(i%2===0){doc.setFillColor(248,248,245);doc.rect(x,y,w[0]+w[1]+w[2],7,'F');doc.setTextColor(26,26,20);}else doc.setTextColor(26,26,20);doc.setFontSize(last?9:8.5);doc.setFont('helvetica',last?'bold':'normal');doc.text(row[0],x+3,y+5);doc.text(row[1],x+w[0]+3,y+5);doc.setFontSize(7.5);doc.setFont('helvetica','italic');if(!last)doc.setTextColor(107,101,88);doc.text(row[2]||'',x+w[0]+w[1]+3,y+5);y+=7;});}
+function pdfTableFull(doc,header,rows,x,y,w,hc){const tw=w.reduce((a,b)=>a+b,0);doc.setFillColor(...hc);doc.rect(x,y,tw,7,'F');doc.setTextColor(255,255,255);doc.setFontSize(8);doc.setFont('helvetica','bold');let cx=x;header[0].forEach((h,i)=>{doc.text(h,cx+2,y+5);cx+=w[i];});y+=7;rows.forEach((row,ri)=>{if(ri%2===0){doc.setFillColor(248,248,245);doc.rect(x,y,tw,6.5,'F');}doc.setFontSize(8.5);doc.setFont('helvetica',ri===rows.length-1?'bold':'normal');doc.setTextColor(26,26,20);cx=x;row.forEach((cell,i)=>{doc.text(cell,cx+2,y+4.5);cx+=w[i];});y+=7;});}
+function fmtN(n){return new Intl.NumberFormat('fr-FR').format(Math.round(n||0));}
+
+function closeModal(){document.getElementById('modal-abo').classList.remove('show');}
+
+// ════════════════════════════════════
+// STRIPE CHECKOUT
+// ════════════════════════════════════
+const STRIPE_PUBLIC_KEY = 'pk_test_51SQ8yW8RcM1rCQsNS8AAs5Xv5woruTSPXV2iGdDg56decX4Lbg1aqfGfwcChEgHPxRDaBrB1wodavhj2JzRTEExK00VVDMEyG7';
+const API_BASE = './api'; // Relatif — fonctionne sur OVH sans config supplémentaire
+
+async function stripeCheckout(type) {
+  const btnText    = document.getElementById('btn-' + (type === 'abonnement' ? 'subscribe' : 'rapport') + '-text');
+  const btnSpinner = document.getElementById('btn-' + (type === 'abonnement' ? 'subscribe' : 'rapport') + '-spinner');
+  const btn        = document.getElementById('btn-' + (type === 'abonnement' ? 'subscribe' : 'rapport'));
+
+  // Email requis pour le rapport
+  let email = '';
+  if (type === 'rapport') {
+    const emailInput = document.getElementById('client-email');
+    email = emailInput ? emailInput.value.trim() : '';
+    if (!email || !email.includes('@')) {
+      emailInput.style.borderColor = '#EF4444';
+      emailInput.placeholder = '⚠️ Entrez votre email pour recevoir le rapport';
+      emailInput.focus();
+      return;
+    }
+  }
+
+  // État loading
+  if (btnText) btnText.style.display = 'none';
+  if (btnSpinner) btnSpinner.style.display = 'inline';
+  if (btn) btn.disabled = true;
+
+  try {
+    const response = await fetch(API_BASE + '/create-checkout.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type,
+        email,
+        metadata: type === 'rapport' ? {
+          revenu: document.getElementById('c-revenu')?.value || '',
+          versement: document.getElementById('c-versement')?.value || '',
+          regime: document.getElementById('c-regime')?.value || '',
+        } : {}
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || data.error) {
+      throw new Error(data.error || 'Erreur lors de la création du paiement');
+    }
+
+    // Redirection vers Stripe Checkout
+    window.location.href = data.url;
+
+  } catch (error) {
+    // Réinitialiser le bouton
+    if (btnText) btnText.style.display = 'inline';
+    if (btnSpinner) btnSpinner.style.display = 'none';
+    if (btn) btn.disabled = false;
+
+    showStripeError(error.message);
+  }
+}
+
+function showStripeError(message) {
+  // Créer ou mettre à jour le message d'erreur
+  let errEl = document.getElementById('stripe-error');
+  if (!errEl) {
+    errEl = document.createElement('div');
+    errEl.id = 'stripe-error';
+    errEl.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#EF4444;color:white;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:999;box-shadow:0 4px 14px rgba(239,68,68,.4);max-width:400px;text-align:center';
+    document.body.appendChild(errEl);
+  }
+  errEl.textContent = '⚠️ ' + message;
+  errEl.style.display = 'block';
+  setTimeout(() => { if (errEl) errEl.style.display = 'none'; }, 5000);
+}
+
+// Détecter retour depuis Stripe (cancel)
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('payment') === 'cancel') {
+    showStripeError('Paiement annulé — vous pouvez réessayer.');
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+  // Détecter abonnement actif (retour page merci)
+  if (localStorage.getItem('hasSubscription') === 'true') {
+    simulationCount = 999; // Illimité
+    updateCounter();
+  }
+})();
+
+// ════════════════════════════════════
+// CLIENT PAGE
+// ════════════════════════════════════
+const TRANCHES_C=[{min:0,max:11294,rate:0},{min:11294,max:28797,rate:.11},{min:28797,max:82341,rate:.30},{min:82341,max:177106,rate:.41},{min:177106,max:Infinity,rate:.45}];
+function fmtC(n){return new Intl.NumberFormat('fr-FR').format(Math.round(n))+'  €';}
+function updateSlider(id,valId){const v=parseInt(document.getElementById(id).value);document.getElementById(valId).textContent=new Intl.NumberFormat('fr-FR').format(v)+' €';}
+function calcIR_C(rev,parts){const qi=rev/parts;let imp=0;for(const t of TRANCHES_C){if(qi>t.min)imp+=(Math.min(qi,t.max)-t.min)*t.rate;}return Math.round(imp*parts);}
+function calcClient(){
+  const parts=parseFloat(document.getElementById('c-parts').value);
+  const revenu=parseInt(document.getElementById('c-revenu').value);
+  const versement=parseInt(document.getElementById('c-versement').value);
+  const regime=document.getElementById('c-regime').value;
+  const plafond=Math.min(Math.max(PASS*.1,revenu*.1),PASS*.8);
+  const versDed=Math.min(versement,plafond);
+  const ir1=calcIR_C(revenu,parts);
+  const ir2=calcIR_C(revenu-versDed,parts);
+  const econIR=ir1-ir2;
+  const econMSA=regime==='reel'?Math.round(versDed*.34):0;
+  const total=econIR+econMSA;
+  const cout=versement-total;
+  const fv=n=>new Intl.NumberFormat('fr-FR').format(Math.round(n))+' €';
+  document.getElementById('r-ir-avant').textContent=fv(ir1);
+  document.getElementById('r-ir-apres').textContent=fv(ir2);
+  document.getElementById('r-econ-ir').textContent='+ '+fv(econIR);
+  document.getElementById('r-econ-msa').textContent=regime==='reel'?'+ '+fv(econMSA):'N/A (micro-BA)';
+  document.getElementById('r-msa-row').style.display=regime==='reel'?'':'none';
+  document.getElementById('r-total').textContent=fv(total);
+  document.getElementById('r-cout').textContent=fv(cout);
+  document.getElementById('r-versement').textContent=fv(versement);
+  document.getElementById('r-versement2').textContent=fv(versement);
+  document.getElementById('r-cout2').textContent=fv(cout);
+  document.getElementById('results-client').classList.add('show');
+  document.getElementById('teaser-box').style.display='block';
+  document.getElementById('results-client').scrollIntoView({behavior:'smooth',block:'start'});
+}
+</script>
+</body>
+</html>
