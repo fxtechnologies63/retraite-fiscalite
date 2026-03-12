@@ -22,7 +22,7 @@ jobs:
           switches: -avzr --delete --exclude='.env.php' --exclude='.git' --exclude='.github' --exclude='logs/' --exclude='README.md'
           path: ./
           remote_path: ~/public_html/
-                    remote_port: 2222
+          remote_port: 2222
           remote_host: ${{ secrets.SSH_HOST }}
           remote_user: ${{ secrets.SSH_USER }}
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
