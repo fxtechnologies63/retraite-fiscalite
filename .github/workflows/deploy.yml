@@ -5,32 +5,24 @@ on:
       - main
 jobs:
   deploy:
-    name: Deploiement sur o2switch
+    name: Deploiement FTP sur o2switch
     runs-on: ubuntu-latest
     steps:
       - name: Checkout du code
         uses: actions/checkout@v4
-      - name: Recuperer IP publique du runner
-        id: ip
-        uses: haythem/public-ip@v1.3
-      - name: Whitelister IP du runner via API cPanel
-        run: |
-          curl -sm 45 -H 'Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}' 'https://${{ secrets.CPANEL_SERVER }}:2083/execute/SshWhitelist/add?address=${{ steps.ip.outputs.ipv4 }}&port=22'
-      - name: Attendre propagation firewall
-        run: sleep 15
-      - name: Deploiement SSH rsync
-        uses: burnett01/rsync-deployments@7.0.1
+      - name: Deploiement FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          switches: -avzr --delete --exclude='.env.php' --exclude='.git' --exclude='.github' --exclude='README.md'
-          path: ./
-          remote_path: ~/public_html/
-          remote_host: ${{ secrets.SSH_HOST }}
-          remote_port: 2222
-          remote_user: ${{ secrets.SSH_USER }}
-          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
-      - name: Retirer IP du runner du whitelist
-        if: always()
-        run: |
-          curl -sm 45 -H 'Authorization: cpanel ${{ secrets.CPANEL_USERNAME }}:${{ secrets.CPANEL_API_TOKEN }}' 'https://${{ secrets.CPANEL_SERVER }}:2083/execute/SshWhitelist/remove?address=${{ steps.ip.outputs.ipv4 }}'
+          server: ftp.ciho6017.odns.fr
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASS }}
+          local-dir: ./
+          server-dir: /public_html/
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/README.md
+            **/.env.php
+            **/.github/**
       - name: Deploiement termine
-        run: echo "Site deploye avec succes !"
+        run: echo "Site deploye avec succes via FTP !"
